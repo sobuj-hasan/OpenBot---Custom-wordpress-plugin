@@ -286,42 +286,60 @@ function custom_chatbot_shortcode()
             background-color: #dddddd;
         }
 
-        /* Animation Default state: Hide messages initially */
-        /* .chat-message.bot {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideUp 0.5s ease-out forwards;
+        /* Chat Alert style */
+        .chat-alert {
+            position: absolute;
+            top: 90px;
+            left: 20px;
+            right: 20px;
+            background: #fff;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .chat-message.bot:nth-child(3) {
-            animation-delay: 0.3s;
+        .chat-alert .alert-content {
+            text-align: center;
         }
 
-        .chat-message.bot:nth-child(2) {
-            animation-delay: 0.6s;
+        .chat-alert p {
+            font-weight: 600;
+            margin: 0px 0px 15px;
+            font-size: 15px;
+            color: #333;
         }
 
-        .chat-message.bot:nth-child(1) {
-            animation-delay: 0.9s;
+        .chat-alert .alert-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
-        
-        .ai-assistant.bot {
-            opacity: 0;
-            transform: translateY(30px);
-            animation: slideUp 0.5s ease-out forwards;
-            animation-delay: 0.1s;
-        } */
+
+        .chat-alert button {
+            font-weight: 600;
+            padding: 8px 14px;
+            font-size: 13px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .chat-alert button#confirmCloseBtn {
+            background-color: #DD072F;
+            color: #fff;
+        }
+
+        .chat-alert button#cancelCloseBtn {
+            background-color: #ddd;
+            color: #333;
+        }
+
+        .chat-alert button:hover {
+            opacity: 0.9;
+        }
 
         @media (max-width: 480px) {
             .chat-window {
@@ -471,15 +489,39 @@ function custom_chatbot_shortcode()
 
             // Close chat window and clear non-bot messages
             closeBtn.addEventListener("click", () => {
-                chatWindow.style.display = "none";
-                needHelpBtn.style.display = "block";
+                // Custom confirmation alert inside the chat window
+                const confirmationAlert = document.createElement("div");
+                confirmationAlert.className = "chat-alert";
+                confirmationAlert.innerHTML = `
+                    <div class="alert-content">
+                        <p>Are you sure you want to Leave this chat?</p>
+                        <div class="alert-buttons">
+                            <button id="confirmCloseBtn">Leave</button>
+                            <button id="cancelCloseBtn">Not now</button>
+                        </div>
+                    </div>
+                `;
+                chatWindow.appendChild(confirmationAlert);
 
-                // Filter and remove all non-bot messages
-                const chatMessages = chatBody.querySelectorAll(".chat-message");
-                chatMessages.forEach((message) => {
-                    if (!message.classList.contains("auto-response")) {
-                        message.remove(); // Remove user messages
-                    }
+                // Confirm close
+                document.getElementById("confirmCloseBtn").addEventListener("click", () => {
+                    chatWindow.style.display = "none";
+                    needHelpBtn.style.display = "block";
+
+                    // Remove non-bot messages
+                    const chatMessages = chatBody.querySelectorAll(".chat-message");
+                    chatMessages.forEach((message) => {
+                        if (!message.classList.contains("auto-response")) {
+                            message.remove(); // Remove user messages
+                        }
+                    });
+
+                    confirmationAlert.remove(); // Remove the alert
+                });
+
+                // Cancel close
+                document.getElementById("cancelCloseBtn").addEventListener("click", () => {
+                    confirmationAlert.remove(); // Remove the alert
                 });
             });
 
@@ -517,7 +559,7 @@ function custom_chatbot_shortcode()
 
                 try {
                     // API call to fetch bot response
-                    const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                    const response = await fetch('https://www.mailcamply.bitchipsoft.com/api/custom-answer', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -531,11 +573,11 @@ function custom_chatbot_shortcode()
                     const result = await response.json();
 
                     // Show bot response
-                    const botReply = result.answer || 'কিছু ভুল হয়েছে, পরে আবার চেষ্টা করুন।';
+                    const botReply = result.message || 'Something wrond, Try again later!';
                     appendMessage("bot", botReply);
                 } catch (error) {
                     console.error("Error fetching bot response:", error);
-                    appendMessage("bot", "দুঃখিত, সার্ভারে সমস্যা হয়েছে।");
+                    appendMessage("bot", "Sorry, Have a server problem");
                 }
             });
 
